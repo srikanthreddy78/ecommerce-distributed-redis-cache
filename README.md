@@ -11,7 +11,7 @@
 
 ---
 
-## 🎯 **Key Technical Achievements**
+## 🎯 **Key Technical Achievement**
 
 <table>
 <tr>
