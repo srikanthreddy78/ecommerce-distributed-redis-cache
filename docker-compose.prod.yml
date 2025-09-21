@@ -1,0 +1,194 @@
+services:
+  # Application
+  ecommerce-cache:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - SPRING_DATA_REDIS_CLUSTER_NODES=redis-node-1:6379,redis-node-2:6379,redis-node-3:6379,redis-node-4:6379,redis-node-5:6379,redis-node-6:6379
+    depends_on:
+      - redis-node-1
+      - redis-node-2
+      - redis-node-3
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - redis-network
+
+  # Redis Cluster Nodes
+  redis-node-1:
+    image: redis:7-alpine
+    ports:
+      - "7001:6379"
+      - "17001:16379"
+    volumes:
+      - ./redis-data/node-1:/data
+    command: >
+      redis-server 
+      --cluster-enabled yes 
+      --cluster-config-file nodes.conf 
+      --cluster-node-timeout 5000 
+      --appendonly yes 
+      --port 6379
+      --maxmemory 256mb
+      --maxmemory-policy allkeys-lru
+    networks:
+      - redis-network
+
+  redis-node-2:
+    image: redis:7-alpine
+    ports:
+      - "7002:6379"
+      - "17002:16379"
+    volumes:
+      - ./redis-data/node-2:/data
+    command: >
+      redis-server 
+      --cluster-enabled yes 
+      --cluster-config-file nodes.conf 
+      --cluster-node-timeout 5000 
+      --appendonly yes 
+      --port 6379
+      --maxmemory 256mb
+      --maxmemory-policy allkeys-lru
+    networks:
+      - redis-network
+
+  redis-node-3:
+    image: redis:7-alpine
+    ports:
+      - "7003:6379"
+      - "17003:16379"
+    volumes:
+      - ./redis-data/node-3:/data
+    command: >
+      redis-server 
+      --cluster-enabled yes 
+      --cluster-config-file nodes.conf 
+      --cluster-node-timeout 5000 
+      --appendonly yes 
+      --port 6379
+      --maxmemory 256mb
+      --maxmemory-policy allkeys-lru
+    networks:
+      - redis-network
+
+  redis-node-4:
+    image: redis:7-alpine
+    ports:
+      - "7004:6379"
+      - "17004:16379"
+    volumes:
+      - ./redis-data/node-4:/data
+    command: >
+      redis-server 
+      --cluster-enabled yes 
+      --cluster-config-file nodes.conf 
+      --cluster-node-timeout 5000 
+      --appendonly yes 
+      --port 6379
+      --maxmemory 256mb
+      --maxmemory-policy allkeys-lru
+    networks:
+      - redis-network
+
+  redis-node-5:
+    image: redis:7-alpine
+    ports:
+      - "7005:6379"
+      - "17005:16379"
+    volumes:
+      - ./redis-data/node-5:/data
+    command: >
+      redis-server 
+      --cluster-enabled yes 
+      --cluster-config-file nodes.conf 
+      --cluster-node-timeout 5000 
+      --appendonly yes 
+      --port 6379
+      --maxmemory 256mb
+      --maxmemory-policy allkeys-lru
+    networks:
+      - redis-network
+
+  redis-node-6:
+    image: redis:7-alpine
+    ports:
+      - "7006:6379"
+      - "17006:16379"
+    volumes:
+      - ./redis-data/node-6:/data
+    command: >
+      redis-server 
+      --cluster-enabled yes 
+      --cluster-config-file nodes.conf 
+      --cluster-node-timeout 5000 
+      --appendonly yes 
+      --port 6379
+      --maxmemory 256mb
+      --maxmemory-policy allkeys-lru
+    networks:
+      - redis-network
+
+  # Redis Commander (UI)
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    hostname: redis-commander
+    ports:
+      - "8081:8081"
+    environment:
+      - REDIS_HOSTS=cluster:redis-node-1:6379,cluster:redis-node-2:6379,cluster:redis-node-3:6379
+    depends_on:
+      - redis-node-1
+      - redis-node-2
+      - redis-node-3
+    networks:
+      - redis-network
+
+  # Monitoring - Prometheus
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--web.enable-lifecycle'
+    depends_on:
+      - ecommerce-cache
+    networks:
+      - redis-network
+
+  # Monitoring - Grafana
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - grafana-storage:/var/lib/grafana
+      # Mount dashboard JSONs
+      - ./monitoring/grafana-dashboards:/var/lib/grafana/dashboards
+      # Mount provisioning config
+      - ./monitoring/provisioning:/etc/grafana/provisioning
+    depends_on:
+      - prometheus
+    networks:
+      - redis-network
+
+networks:
+  redis-network:
+    driver: bridge
+
+volumes:
+  grafana-storage:

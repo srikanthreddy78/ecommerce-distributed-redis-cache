@@ -1,0 +1,125 @@
+services:
+  redis-node-1:
+    image: redis:7-alpine
+    container_name: redis-node-1
+    platform: linux/amd64
+    ports:
+      - "7001:6379"
+      - "17001:16379"
+    volumes:
+      - ./redis-data/node-1:/data
+    command: >
+      redis-server 
+      --cluster-enabled yes 
+      --cluster-config-file nodes.conf 
+      --cluster-node-timeout 5000 
+      --appendonly yes 
+      --port 6379
+      --maxmemory 256mb
+      --maxmemory-policy allkeys-lru
+
+  redis-node-2:
+    image: redis:7-alpine
+    container_name: redis-node-2
+    platform: linux/amd64
+    ports:
+      - "7002:6379"
+      - "17002:16379"
+    volumes:
+      - ./redis-data/node-2:/data
+    command: >
+      redis-server 
+      --cluster-enabled yes 
+      --cluster-config-file nodes.conf 
+      --cluster-node-timeout 5000 
+      --appendonly yes 
+      --port 6379
+      --maxmemory 256mb
+      --maxmemory-policy allkeys-lru
+
+  redis-node-3:
+    image: redis:7-alpine
+    container_name: redis-node-3
+    platform: linux/amd64
+    ports:
+      - "7003:6379"
+      - "17003:16379"
+    volumes:
+      - ./redis-data/node-3:/data
+    command: >
+      redis-server 
+      --cluster-enabled yes 
+      --cluster-config-file nodes.conf 
+      --cluster-node-timeout 5000 
+      --appendonly yes 
+      --port 6379
+      --maxmemory 256mb
+      --maxmemory-policy allkeys-lru
+
+  redis-node-4:
+    image: redis:7-alpine
+    container_name: redis-node-4
+    platform: linux/amd64
+    ports:
+      - "7004:6379"
+      - "17004:16379"
+    volumes:
+      - ./redis-data/node-4:/data
+    command: >
+      redis-server 
+      --cluster-enabled yes 
+      --cluster-config-file nodes.conf 
+      --cluster-node-timeout 5000 
+      --appendonly yes 
+      --port 6379
+      --maxmemory 256mb
+      --maxmemory-policy allkeys-lru
+
+  redis-node-5:
+    image: redis:7-alpine
+    container_name: redis-node-5
+    platform: linux/amd64
+    ports:
+      - "7005:6379"
+      - "17005:16379"
+    volumes:
+      - ./redis-data/node-5:/data
+    command: >
+      redis-server 
+      --cluster-enabled yes 
+      --cluster-config-file nodes.conf 
+      --cluster-node-timeout 5000 
+      --appendonly yes 
+      --port 6379
+      --maxmemory 256mb
+      --maxmemory-policy allkeys-lru
+
+  redis-node-6:
+    image: redis:7-alpine
+    container_name: redis-node-6
+    platform: linux/amd64
+    ports:
+      - "7006:6379"
+      - "17006:16379"
+    volumes:
+      - ./redis-data/node-6:/data
+    command: >
+      redis-server 
+      --cluster-enabled yes 
+      --cluster-config-file nodes.conf 
+      --cluster-node-timeout 5000 
+      --appendonly yes 
+      --port 6379
+      --maxmemory 256mb
+      --maxmemory-policy allkeys-lru
+
+  # Redis monitoring
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    platform: linux/amd64
+    container_name: redis-commander
+    hostname: redis-commander
+    ports:
+      - "8081:8081"
+    environment:
+      - REDIS_HOSTS=cluster:redis-node-1:6379,cluster:redis-node-2:6379,cluster:redis-node-3:6379
