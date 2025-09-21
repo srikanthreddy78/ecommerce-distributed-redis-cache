@@ -1,0 +1,96 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: ecommerce-redis-cache
+
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+    deserialization:
+      fail-on-unknown-properties: false
+    modules:
+      - com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
+
+
+  data:
+    redis:
+      cluster:
+        nodes:
+          - 127.0.0.1:7001
+          - 127.0.0.1:7002
+          - 127.0.0.1:7003
+          - 127.0.0.1:7004
+          - 127.0.0.1:7005
+          - 127.0.0.1:7006
+        max-redirects: 3
+      timeout: 2000ms
+      lettuce:
+        pool:
+          min-idle: 5
+          max-idle: 20
+          max-active: 50
+          max-wait: -1ms
+        cluster:
+          refresh:
+            adaptive: true
+            period: 30s
+
+# Cache Configuration
+cache:
+  tiers:
+    l1-product:
+      ttl: 86400  # 24 hours
+      prefix: "l1:product:"
+    l2-session:
+      ttl: 1800   # 30 minutes
+      prefix: "l2:session:"
+    l3-inventory:
+      ttl: 300    # 5 minutes
+      prefix: "l3:inventory:"
+    l4-analytics:
+      ttl: 3600   # 1 hour
+      prefix: "l4:analytics:"
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus,cache
+  endpoint:
+    health:
+      show-details: always
+    metrics:
+      enabled: true
+    prometheus:
+      enabled: true
+prometheus:
+  metrics:
+    export:
+      enabled: true
+    tags:
+      application: ${spring.application.name}
+      environment: dev
+    distribution:
+      percentiles-histogram:
+        "[http.server.requests]": true
+      percentiles:
+        "[http.server.requests]": 0.5, 0.95, 0.99
+    web:
+      server:
+        request:
+          autotime:
+            enabled: true
+
+# Logging
+logging:
+  level:
+    com.ecommerce.cache: DEBUG
+    io.lettuce: INFO
+    org.springframework.data.redis: INFO
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+  file:
+    name: logs/ecommerce-cache.log
